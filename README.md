@@ -1,8 +1,3 @@
----
-title: "Relper (Read Helper) - PDF Reading Assistant"
-date: "2026-04-20"
-description: "An open-source PDF reading assistant available on Web and Desktop, featuring instant dictionary
----
 ## Overview
 
 **Relper (Read Helper)** is an open-source PDF reading assistant built to streamline the reading experience across both Web and Windows Desktop environments. By utilizing a single, shared React codebase wrapped in lightweight native hosts, Relper allows users to open local PDF files, select words for instant dictionary definitions, and highlight phrases for AI-generated explanations.
