@@ -46,6 +46,28 @@ From this folder (`read_helper_desktop`):
 - Main executable: `dist\ReadHelperDesktop\ReadHelperDesktop.exe`
 - Installer: `dist\installer\ReadHelperDesktop-Setup.exe`
 
+## Website Download Asset (GitHub Releases)
+
+The website download button should point to one release asset file, not a folder/repository download.
+
+- Release asset name used by the website: `RelperDesktop-Windows.zip`
+- Direct download URL pattern:
+   `https://github.com/KavishkaDulshan/Relper/releases/latest/download/RelperDesktop-Windows.zip`
+
+This repo includes GitHub Actions workflow `.github/workflows/release-desktop.yml` that:
+
+1. Builds the desktop app with `build_tools/build_exe.ps1`
+2. Zips only `dist\ReadHelperDesktop\*` as `dist\RelperDesktop-Windows.zip`
+3. Uploads that zip to a GitHub Release
+
+To publish a new downloadable desktop build:
+
+1. Create and push a version tag (example):
+    `git tag v1.2.0`
+    `git push origin v1.2.0`
+2. Wait for the workflow to finish.
+3. The website button will download the new asset from `releases/latest/download/...` automatically.
+
 ## Notes
 
 - Internet is required for dictionary and AI API lookups.

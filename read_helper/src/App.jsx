@@ -18,6 +18,9 @@ const DUPLICATE_LOOKUP_WINDOW_MS = 700
 const CONTROLS_AUTO_HIDE_DELAY_MS = 1400
 const APP_DISPLAY_NAME = 'Relper'
 const APP_LOGO_PATH = `${import.meta.env.BASE_URL}relper-logo.svg`
+const GITHUB_REPOSITORY_URL = 'https://github.com/KavishkaDulshan/Relper'
+const DESKTOP_RELEASE_ASSET_NAME = 'RelperDesktop-Windows.zip'
+const GITHUB_DESKTOP_DOWNLOAD_URL = `${GITHUB_REPOSITORY_URL}/releases/latest/download/${DESKTOP_RELEASE_ASSET_NAME}`
 
 function clampScale(value) {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, Number(value.toFixed(2))))
@@ -59,7 +62,7 @@ function getDefaultStatusMessage(isCompactLayout) {
   return 'Choose a local PDF, then highlight a word for quick help.'
 }
 
-function App() {
+function ReaderApp() {
   const [pdfFile, setPdfFile] = useState(null)
   const [popupState, setPopupState] = useState(null)
   const [scale, setScale] = useState(() => getDefaultScaleForViewport())
@@ -786,6 +789,91 @@ function App() {
       />
     </div>
   )
+}
+
+function LandingPage({ onOpenReader }) {
+  return (
+    <main className="landing-shell">
+      <section className="landing-hero" aria-labelledby="landing-title">
+        <p className="landing-hero__eyebrow">Open source reading tools</p>
+        <h1 className="landing-hero__title" id="landing-title">Relper</h1>
+        <p className="landing-hero__lede">
+          A minimal PDF reader for the web and a downloadable desktop build for Windows.
+          Free to use, free to remix, and built to stay small.
+        </p>
+
+        <div className="landing-hero__actions">
+          <button type="button" className="landing-button landing-button--primary" onClick={onOpenReader}>
+            Open web reader
+          </button>
+          <a className="landing-button landing-button--secondary" href={GITHUB_DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+            Download desktop
+          </a>
+        </div>
+
+        <div className="landing-hero__meta" aria-label="Product highlights">
+          <span>Local PDF reading</span>
+          <span>Dictionary lookup</span>
+          <span>Desktop release from GitHub</span>
+        </div>
+      </section>
+
+      <section className="landing-grid" aria-label="Products">
+        <article className="product-card">
+          <p className="product-card__tag">Web</p>
+          <h2>Browser reader</h2>
+          <p>
+            A clean web app for reading local PDFs and checking definitions without unnecessary noise.
+          </p>
+        </article>
+
+        <article className="product-card">
+          <p className="product-card__tag">Desktop</p>
+          <h2>Windows app</h2>
+          <p>
+            The packaged desktop build lives on GitHub Releases so anyone can download the latest installer.
+          </p>
+        </article>
+
+        <article className="product-card product-card--compact">
+          <p className="product-card__tag">Source</p>
+          <h2>Open code</h2>
+          <p>
+            The project stays transparent and easy to fork, rebuild, and publish on your own.
+          </p>
+        </article>
+      </section>
+
+      <footer className="landing-footer">
+        <a href={GITHUB_REPOSITORY_URL} target="_blank" rel="noreferrer">
+          View source on GitHub
+        </a>
+      </footer>
+    </main>
+  )
+}
+
+function App() {
+  const [showReader, setShowReader] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    const params = new URLSearchParams(window.location.search)
+    return params.get('desktop') === '1' || params.get('reader') === '1'
+  })
+
+  const openReader = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href)
+      currentUrl.searchParams.set('reader', '1')
+      window.history.replaceState({}, '', `${currentUrl.pathname}?${currentUrl.searchParams.toString()}${currentUrl.hash}`)
+    }
+
+    setShowReader(true)
+  }, [])
+
+  return showReader ? <ReaderApp /> : <LandingPage onOpenReader={openReader} />
 }
 
 export default App

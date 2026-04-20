@@ -35,6 +35,8 @@ This means product behavior is implemented once in React, while Desktop packages
 
 This project can be hosted on GitHub Pages.
 
+The published site now opens as a minimal landing page with links to the web reader, the source code, and the latest desktop release.
+
 1. Build with relative asset paths:
 
 ```powershell

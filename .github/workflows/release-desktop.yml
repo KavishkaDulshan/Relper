@@ -1,0 +1,74 @@
+name: Release Desktop Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (for example v1.2.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release-desktop:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: read_helper/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Resolve release tag
+        id: release_meta
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'push') {
+            "tag=${{ github.ref_name }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            exit 0
+          }
+
+          $tag = '${{ inputs.tag_name }}'
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            throw 'workflow_dispatch requires tag_name'
+          }
+
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Build desktop distribution
+        shell: pwsh
+        run: |
+          Set-Location read_helper_desktop
+          .\build_tools\build_exe.ps1
+
+          $assetName = 'RelperDesktop-Windows.zip'
+          $assetPath = Join-Path 'dist' $assetName
+          if (Test-Path $assetPath) {
+            Remove-Item -Force $assetPath
+          }
+
+          Compress-Archive -Path 'dist\ReadHelperDesktop\*' -DestinationPath $assetPath -Force
+
+      - name: Publish GitHub release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag }}
+          name: Relper ${{ steps.release_meta.outputs.tag }}
+          files: read_helper_desktop/dist/RelperDesktop-Windows.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true

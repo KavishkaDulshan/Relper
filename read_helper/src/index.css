@@ -1,15 +1,15 @@
 :root {
-  --text: #1f2937;
-  --text-h: #0f172a;
-  --bg: #f3f5f8;
-  --border: #d5dbe5;
-  --code-bg: #ecf1f7;
-  --accent: #2563eb;
-  --accent-bg: rgba(37, 99, 235, 0.15);
-  --accent-border: rgba(37, 99, 235, 0.4);
+  --text: #25303d;
+  --text-h: #111827;
+  --bg: #f4f1ea;
+  --border: #d9d2c7;
+  --code-bg: #ebe4d8;
+  --accent: #0f766e;
+  --accent-bg: rgba(15, 118, 110, 0.14);
+  --accent-border: rgba(15, 118, 110, 0.38);
 
-  --sans: 'Source Sans 3', 'Trebuchet MS', 'Segoe UI', sans-serif;
-  --heading: 'Merriweather Sans', 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --sans: 'Segoe UI', 'Trebuchet MS', sans-serif;
+  --heading: 'Segoe UI', 'Trebuchet MS', sans-serif;
   --mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, monospace;
 
   font: 16px/1.5 var(--sans);
@@ -27,7 +27,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top, rgba(15, 118, 110, 0.08), transparent 30%),
+    linear-gradient(180deg, #f7f4ee 0%, var(--bg) 100%);
 }
 
 #root {
