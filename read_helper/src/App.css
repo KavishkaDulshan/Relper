@@ -1141,6 +1141,17 @@ a:focus-visible {
   color: #f8fafc;
 }
 
+.launch-card__secondary {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid #d6dee9;
+  background: rgba(255, 255, 255, 0.84);
+  color: #0f172a;
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 .launch-card__contrast.is-active {
   background: #0f172a;
   border-color: #0f172a;
@@ -1210,6 +1221,15 @@ a:focus-visible {
   font-size: 0.8rem;
 }
 
+.reader-top-actions button:hover,
+.launch-card__open:hover,
+.launch-card__contrast:hover,
+.launch-card__secondary:hover,
+.reader-nav-button:hover,
+.reader-notes-button:hover {
+  filter: brightness(0.98);
+}
+
 .reader-top-actions button.is-active {
   background: #0f172a;
   border-color: #0f172a;
@@ -1276,6 +1296,143 @@ a:focus-visible {
   z-index: 70;
 }
 
+.ai-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 82;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(10px);
+}
+
+.ai-settings-modal {
+  width: min(560px, 100%);
+  max-height: calc(100svh - 36px);
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid #d5dbe5;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  color: #0f172a;
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.28);
+}
+
+.ai-settings-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ai-settings-modal__eyebrow {
+  margin: 0 0 4px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ai-settings-modal__header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.15;
+}
+
+.ai-settings-modal__close {
+  min-height: 32px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ai-settings-modal__description,
+.ai-settings-modal__note,
+.ai-settings-modal__error,
+.ai-settings-modal__success {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.ai-settings-modal__description,
+.ai-settings-modal__note {
+  color: #475569;
+}
+
+.ai-settings-modal__error {
+  color: #b42318;
+}
+
+.ai-settings-modal__success {
+  color: #0f766e;
+}
+
+.ai-settings-form {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-settings-field {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-settings-field span {
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.ai-settings-field input {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 0 12px;
+}
+
+.ai-settings-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.ai-settings-modal__actions button {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ai-settings-modal__primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #f8fafc;
+}
+
+.ai-settings-modal__secondary {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.ai-settings-modal__tertiary {
+  background: transparent;
+  color: #334155;
+}
+
 .app-shell--high-contrast .launch-card {
   background: linear-gradient(160deg, #0f172a, #111f34);
   border-color: #475569;
@@ -1285,6 +1442,7 @@ a:focus-visible {
 .app-shell--high-contrast .launch-card__copy,
 .app-shell--high-contrast .launch-card__open,
 .app-shell--high-contrast .launch-card__contrast,
+.app-shell--high-contrast .launch-card__secondary,
 .app-shell--high-contrast .reader-nav-button,
 .app-shell--high-contrast .reader-notes-button,
 .app-shell--high-contrast .reader-top-actions button {
@@ -1298,13 +1456,29 @@ a:focus-visible {
 
 .app-shell--high-contrast .launch-card__open,
 .app-shell--high-contrast .launch-card__contrast,
+.app-shell--high-contrast .launch-card__secondary,
 .app-shell--high-contrast .reader-top-actions,
 .app-shell--high-contrast .reader-top-actions button,
 .app-shell--high-contrast .reader-nav-button,
 .app-shell--high-contrast .reader-notes-button,
-.app-shell--high-contrast .notes-panel__close {
+.app-shell--high-contrast .notes-panel__close,
+.app-shell--high-contrast .ai-settings-modal,
+.app-shell--high-contrast .ai-settings-modal__close,
+.app-shell--high-contrast .ai-settings-field input,
+.app-shell--high-contrast .ai-settings-modal__actions button {
   background: #1e293b;
   border-color: #64748b;
+}
+
+.app-shell--high-contrast .ai-settings-modal__description,
+.app-shell--high-contrast .ai-settings-modal__note,
+.app-shell--high-contrast .ai-settings-modal__success,
+.app-shell--high-contrast .ai-settings-field span {
+  color: #dbeafe;
+}
+
+.app-shell--high-contrast .ai-settings-modal__error {
+  color: #fecaca;
 }
 
 @media (max-width: 900px) {
@@ -1356,6 +1530,24 @@ a:focus-visible {
     right: 8px;
     font-size: 0.78rem;
   }
+
+  .ai-settings-modal {
+    width: min(100%, 520px);
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .ai-settings-modal__header {
+    align-items: flex-start;
+  }
+
+  .ai-settings-modal__actions {
+    flex-direction: column;
+  }
+
+  .ai-settings-modal__actions button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1364,6 +1556,7 @@ a:focus-visible {
   }
 
   .launch-card__open,
+  .launch-card__secondary,
   .launch-card__contrast {
     flex: 1 1 140px;
     justify-content: center;
@@ -1372,5 +1565,9 @@ a:focus-visible {
   .reader-top-actions {
     gap: 6px;
     padding: 5px;
+  }
+
+  .reader-top-actions button {
+    flex: 1 1 110px;
   }
 }

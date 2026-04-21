@@ -36,4 +36,14 @@ try {
     Pop-Location
 }
 
+$runtimeGroqConfig = Join-Path $desktopRoot 'groq.config.json'
+$distGroqConfig = Join-Path $distDir 'groq.config.json'
+
+if (Test-Path $runtimeGroqConfig) {
+    Copy-Item -Force $runtimeGroqConfig $distGroqConfig
+    Write-Host 'Copied groq.config.json to dist\ReadHelperDesktop\groq.config.json'
+} else {
+    Write-Warning 'groq.config.json not found. Desktop AI requires a user-provided key in AI settings.'
+}
+
 Write-Host 'EXE build complete: dist\ReadHelperDesktop\ReadHelperDesktop.exe'

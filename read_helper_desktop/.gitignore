@@ -23,3 +23,7 @@ Thumbs.db
 # Installer and binary artifacts
 *.exe
 *.msi
+
+# Local AI credentials (never commit)
+groq.config.json
+groq_config.json

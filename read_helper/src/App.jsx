@@ -3,6 +3,12 @@ import './App.css'
 import DictionaryPopup from './components/DictionaryPopup.jsx'
 import PdfViewer from './components/PdfViewer.jsx'
 import { explainPhraseInSimpleTerms } from './utils/aiExplainApi.js'
+import {
+  clearDesktopAiConfig,
+  DEFAULT_DESKTOP_AI_MODEL,
+  fetchDesktopAiConfig,
+  saveDesktopAiConfig,
+} from './utils/desktopAiConfigApi.js'
 import { fetchDictionaryEntry } from './utils/dictionaryApi.js'
 import { getSelectionContext } from './utils/selectionUtils.js'
 
@@ -91,7 +97,20 @@ function ReaderApp() {
 
     return Boolean(window.Capacitor)
   })
-  const aiAnalysisEnabled = isDesktopApp || isNativeApp
+  const [desktopAiConfig, setDesktopAiConfig] = useState({
+    isLoading: isDesktopApp,
+    hasApiKey: false,
+    apiKeyPreview: '',
+    model: DEFAULT_DESKTOP_AI_MODEL,
+    error: '',
+  })
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false)
+  const [isAiSettingsSaving, setIsAiSettingsSaving] = useState(false)
+  const [aiSettingsApiKey, setAiSettingsApiKey] = useState('')
+  const [aiSettingsModel, setAiSettingsModel] = useState(DEFAULT_DESKTOP_AI_MODEL)
+  const [aiSettingsError, setAiSettingsError] = useState('')
+  const [aiSettingsSuccess, setAiSettingsSuccess] = useState('')
+  const aiAnalysisEnabled = isNativeApp || (isDesktopApp && desktopAiConfig.hasApiKey)
   const [isNotesCollapsed, setIsNotesCollapsed] = useState(() => isCompactLayoutViewport())
   const [activeNoteWord, setActiveNoteWord] = useState('')
   const [notesByPdf, setNotesByPdf] = useState(() => {
@@ -116,6 +135,161 @@ function ReaderApp() {
   const lastLookupAtRef = useRef(0)
   const notesEnabled = true
   const useContinuousScroll = true
+
+  const refreshDesktopAiConfig = useCallback(async () => {
+    if (!isDesktopApp) {
+      return
+    }
+
+    setDesktopAiConfig((previous) => ({
+      ...previous,
+      isLoading: true,
+      error: '',
+    }))
+
+    try {
+      const config = await fetchDesktopAiConfig()
+
+      setDesktopAiConfig({
+        isLoading: false,
+        hasApiKey: config.hasApiKey,
+        apiKeyPreview: config.apiKeyPreview,
+        model: config.model,
+        error: '',
+      })
+      setAiSettingsModel(config.model)
+
+      if (!config.hasApiKey) {
+        setStatusMessage('Add your Groq API key in AI settings to enable phrase explanations.')
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not load desktop AI settings.'
+
+      setDesktopAiConfig((previous) => ({
+        ...previous,
+        isLoading: false,
+        error: message,
+      }))
+    }
+  }, [isDesktopApp])
+
+  useEffect(() => {
+    void refreshDesktopAiConfig()
+  }, [refreshDesktopAiConfig])
+
+  const openAiSettingsDialog = useCallback(() => {
+    setAiSettingsApiKey('')
+    setAiSettingsModel(desktopAiConfig.model || DEFAULT_DESKTOP_AI_MODEL)
+    setAiSettingsError('')
+    setAiSettingsSuccess('')
+    setIsAiSettingsOpen(true)
+  }, [desktopAiConfig.model])
+
+  const closeAiSettingsDialog = useCallback(() => {
+    if (isAiSettingsSaving) {
+      return
+    }
+
+    setIsAiSettingsOpen(false)
+  }, [isAiSettingsSaving])
+
+  const handleSaveAiSettings = useCallback(async (event) => {
+    event.preventDefault()
+
+    if (!isDesktopApp || isAiSettingsSaving) {
+      return
+    }
+
+    const normalizedApiKey = aiSettingsApiKey.trim()
+    const normalizedModel = aiSettingsModel.trim() || DEFAULT_DESKTOP_AI_MODEL
+
+    if (!normalizedApiKey) {
+      setAiSettingsSuccess('')
+      setAiSettingsError('Groq API key is required.')
+      return
+    }
+
+    if (!normalizedApiKey.startsWith('gsk_')) {
+      setAiSettingsSuccess('')
+      setAiSettingsError('Groq API key must start with gsk_.')
+      return
+    }
+
+    setIsAiSettingsSaving(true)
+    setAiSettingsError('')
+    setAiSettingsSuccess('')
+
+    try {
+      const config = await saveDesktopAiConfig({
+        apiKey: normalizedApiKey,
+        model: normalizedModel,
+      })
+
+      setDesktopAiConfig({
+        isLoading: false,
+        hasApiKey: config.hasApiKey,
+        apiKeyPreview: config.apiKeyPreview,
+        model: config.model,
+        error: '',
+      })
+      setAiSettingsApiKey('')
+      setAiSettingsModel(config.model)
+      setAiSettingsSuccess(`Saved. Using model ${config.model}.`)
+      setStatusMessage('Groq API key saved. Phrase explanations are enabled.')
+    } catch (error) {
+      setAiSettingsError(error instanceof Error ? error.message : 'Could not save desktop AI settings.')
+    } finally {
+      setIsAiSettingsSaving(false)
+    }
+  }, [aiSettingsApiKey, aiSettingsModel, isAiSettingsSaving, isDesktopApp])
+
+  const handleClearAiSettings = useCallback(async () => {
+    if (!isDesktopApp || isAiSettingsSaving) {
+      return
+    }
+
+    setIsAiSettingsSaving(true)
+    setAiSettingsError('')
+    setAiSettingsSuccess('')
+
+    try {
+      const config = await clearDesktopAiConfig()
+
+      setDesktopAiConfig({
+        isLoading: false,
+        hasApiKey: config.hasApiKey,
+        apiKeyPreview: config.apiKeyPreview,
+        model: config.model,
+        error: '',
+      })
+      setAiSettingsApiKey('')
+      setAiSettingsModel(config.model)
+      setAiSettingsSuccess('AI key removed. Add your key again when you need phrase explanations.')
+      setStatusMessage('Groq API key removed. Add a key in AI settings to enable phrase explanations.')
+    } catch (error) {
+      setAiSettingsError(error instanceof Error ? error.message : 'Could not remove desktop AI settings.')
+    } finally {
+      setIsAiSettingsSaving(false)
+    }
+  }, [isAiSettingsSaving, isDesktopApp])
+
+  useEffect(() => {
+    if (!isAiSettingsOpen) {
+      return undefined
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        closeAiSettingsDialog()
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [closeAiSettingsDialog, isAiSettingsOpen])
 
   useEffect(() => {
     const handleViewportChange = () => {
@@ -239,7 +413,11 @@ function ReaderApp() {
       const isPhraseSelection = selectionContext.type === 'phrase'
 
       if (isPhraseSelection && !aiAnalysisEnabled) {
-        setStatusMessage('AI phrase analysis is disabled on web. Select a single word for definition.')
+        setStatusMessage(
+          isDesktopApp
+            ? 'Add your Groq API key in AI settings to enable phrase explanations.'
+            : 'AI phrase analysis is unavailable in the web app. Select a single word for definition.'
+        )
         return
       }
 
@@ -261,7 +439,9 @@ function ReaderApp() {
 
       setStatusMessage(
         isPhraseSelection
-          ? 'Analyzing selected phrase with AI...'
+          ? isDesktopApp
+            ? 'Analyzing selected phrase with Groq AI...'
+            : 'Analyzing selected phrase with AI...'
           : `Looking up "${selectedText}"...`
       )
 
@@ -301,7 +481,9 @@ function ReaderApp() {
           setStatusMessage(
             aiResult.source.startsWith('Fallback mode')
               ? 'Showing a local fallback explanation for the selected phrase.'
-              : 'Showing a simple AI explanation for the selected phrase.'
+              : isDesktopApp
+                ? 'Showing a Groq explanation for the selected phrase.'
+                : 'Showing a simple AI explanation for the selected phrase.'
           )
           return
         }
@@ -616,7 +798,9 @@ function ReaderApp() {
             </div>
             <h1 className="launch-card__title">Open a PDF and start reading</h1>
             <p className="launch-card__copy">
-              {aiAnalysisEnabled
+              {isDesktopApp && !desktopAiConfig.hasApiKey
+                ? 'Select a local PDF to enter a clean, full-screen reading mode with quick definitions. Set up your Groq API key in AI settings to enable phrase explanations.'
+                : aiAnalysisEnabled
                 ? 'Select a local PDF to enter a clean, full-screen reading mode with quick definitions and phrase explanations.'
                 : 'Select a local PDF to enter a clean, full-screen reading mode with quick definitions.'}
             </p>
@@ -625,6 +809,11 @@ function ReaderApp() {
               <button type="button" className="launch-card__open" onClick={openPdfPicker}>
                 Select PDF
               </button>
+              {isDesktopApp && (
+                <button type="button" className="launch-card__secondary" onClick={openAiSettingsDialog}>
+                  {desktopAiConfig.hasApiKey ? 'Groq settings' : 'Set Groq key'}
+                </button>
+              )}
               <button
                 type="button"
                 className={`launch-card__contrast ${highContrast ? 'is-active' : ''}`}
@@ -715,6 +904,11 @@ function ReaderApp() {
 
           <div className={`reader-top-actions ${controlsHiddenClass}`} data-ignore-selection="true">
             <button type="button" onClick={openPdfPicker}>Open PDF</button>
+            {isDesktopApp && (
+              <button type="button" onClick={openAiSettingsDialog}>
+                {desktopAiConfig.hasApiKey ? 'Groq settings' : 'Set Groq key'}
+              </button>
+            )}
             {!isNativeApp && (
               <>
                 <button
@@ -777,6 +971,81 @@ function ReaderApp() {
             Next
           </button>
         </>
+      )}
+
+      {isDesktopApp && isAiSettingsOpen && (
+        <div className="ai-settings-backdrop" role="presentation" onClick={closeAiSettingsDialog}>
+          <section
+            className="ai-settings-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ai-settings-title"
+            aria-describedby="ai-settings-description"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="ai-settings-modal__header">
+              <div>
+                <p className="ai-settings-modal__eyebrow">Desktop AI</p>
+                <h2 id="ai-settings-title">Groq API key</h2>
+              </div>
+              <button type="button" className="ai-settings-modal__close" onClick={closeAiSettingsDialog}>
+                Close
+              </button>
+            </header>
+
+            <p id="ai-settings-description" className="ai-settings-modal__description">
+              Store your own Groq key on this Windows desktop build. The key stays local to this machine and is only used for phrase explanations.
+            </p>
+
+            {desktopAiConfig.isLoading && <p className="ai-settings-modal__note">Loading saved settings...</p>}
+            {desktopAiConfig.error && <p className="ai-settings-modal__error">{desktopAiConfig.error}</p>}
+            {desktopAiConfig.hasApiKey && (
+              <p className="ai-settings-modal__note">
+                Saved key detected: {desktopAiConfig.apiKeyPreview}. Current model: {desktopAiConfig.model}.
+              </p>
+            )}
+            {aiSettingsError && <p className="ai-settings-modal__error">{aiSettingsError}</p>}
+            {aiSettingsSuccess && <p className="ai-settings-modal__success">{aiSettingsSuccess}</p>}
+
+            <form className="ai-settings-form" onSubmit={handleSaveAiSettings}>
+              <label className="ai-settings-field">
+                <span>Groq API key</span>
+                <input
+                  type="password"
+                  value={aiSettingsApiKey}
+                  onChange={(event) => setAiSettingsApiKey(event.target.value)}
+                  placeholder="gsk_..."
+                  autoComplete="off"
+                  spellCheck="false"
+                />
+              </label>
+
+              <label className="ai-settings-field">
+                <span>Model</span>
+                <input
+                  type="text"
+                  value={aiSettingsModel}
+                  onChange={(event) => setAiSettingsModel(event.target.value)}
+                  placeholder={DEFAULT_DESKTOP_AI_MODEL}
+                  autoComplete="off"
+                  spellCheck="false"
+                />
+              </label>
+
+              <div className="ai-settings-modal__actions">
+                <button type="submit" className="ai-settings-modal__primary" disabled={isAiSettingsSaving}>
+                  {isAiSettingsSaving ? 'Saving...' : 'Save key'}
+                </button>
+                <button type="button" className="ai-settings-modal__secondary" onClick={handleClearAiSettings} disabled={isAiSettingsSaving}>
+                  Remove key
+                </button>
+                <button type="button" className="ai-settings-modal__tertiary" onClick={closeAiSettingsDialog} disabled={isAiSettingsSaving}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
       )}
 
       <DictionaryPopup

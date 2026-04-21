@@ -8,7 +8,7 @@ The desktop app preserves the current web functionality by embedding the built R
 
 - Local PDF loading and rendering (`pdfjs-dist` behavior stays unchanged)
 - Word selection dictionary lookup (`dictionaryapi.dev`)
-- Phrase selection AI explanation (`text.pollinations.ai` fallback chain)
+- Phrase selection AI explanation powered by Groq in desktop mode only
 - Existing drag/resize popup and responsive UI logic
 
 ## Architecture
@@ -25,6 +25,18 @@ The desktop app preserves the current web functionality by embedding the built R
 2. Node.js + npm installed.
 3. Inno Setup 6 installed at:
    `C:\Program Files (x86)\Inno Setup 6\ISCC.exe`
+
+4. A Groq API key entered by the user in Desktop AI settings.
+   - The app saves it locally to `groq.config.json` next to `ReadHelperDesktop.exe`.
+
+Example `groq.config.json`:
+
+```json
+{
+   "apiKey": "YOUR_GROQ_API_KEY",
+   "model": "llama-3.3-70b-versatile"
+}
+```
 
 ## Build Steps
 
@@ -71,5 +83,9 @@ To publish a new downloadable desktop build:
 ## Notes
 
 - Internet is required for dictionary and AI API lookups.
+- The web app keeps the existing Pollinations flow. Only the desktop wrapper uses Groq.
+- Desktop mode reports Groq API errors directly in the popup instead of silently showing local fallback text.
+- If no key is configured, desktop prompts users to set up a Groq key in AI settings before phrase explanations can run.
 - PDFs are opened locally from user machine; no PDF upload to server is performed.
+- `build_tools/build_exe.ps1` copies `groq.config.json` into `dist\ReadHelperDesktop\` when present.
 - To refresh desktop content after web changes, rerun `build_tools/sync_frontend.ps1`.

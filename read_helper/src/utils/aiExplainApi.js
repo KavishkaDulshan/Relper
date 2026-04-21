@@ -1,5 +1,6 @@
 const OPENAI_COMPAT_ENDPOINT = 'https://text.pollinations.ai/openai'
 const LEGACY_TEXT_ENDPOINT = 'https://text.pollinations.ai'
+const DESKTOP_AI_ENDPOINT = '/api/ai/explain'
 const PRIMARY_MODEL = 'openai-fast'
 const SECONDARY_MODEL = 'openai'
 const MAX_PHRASE_LENGTH = 420
@@ -53,6 +54,14 @@ function escapeRegExp(value) {
 
 function normalizePhrase(phrase) {
   return stripOuterQuotes(phrase.replace(/\s+/g, ' ').trim()).slice(0, MAX_PHRASE_LENGTH)
+}
+
+function isDesktopRuntime() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return new URLSearchParams(window.location.search).get('desktop') === '1'
 }
 
 function extractKeywords(phrase) {
@@ -409,6 +418,36 @@ async function requestOpenAiCompat(phrase, model) {
   return data?.choices?.[0]?.message?.content ?? ''
 }
 
+async function requestDesktopGroqExplanation(phrase) {
+  const response = await fetchWithTimeout(DESKTOP_AI_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      phrase,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => null)
+    const message =
+      typeof errorPayload?.error === 'string' && errorPayload.error.trim().length > 0
+        ? errorPayload.error.trim()
+        : `Desktop Groq endpoint failed (HTTP ${response.status}).`
+
+    throw new Error(message)
+  }
+
+  const data = await response.json().catch(() => null)
+
+  if (!data || typeof data.explanation !== 'string') {
+    throw new Error('Desktop Groq endpoint returned no explanation.')
+  }
+
+  return data.explanation
+}
+
 async function requestLegacyFallback(phrase) {
   const prompt = buildLegacyPrompt(phrase)
   const response = await fetchWithTimeout(`${LEGACY_TEXT_ENDPOINT}/${encodeURIComponent(prompt)}`)
@@ -422,25 +461,35 @@ async function requestLegacyFallback(phrase) {
 
 export async function explainPhraseInSimpleTerms(phrase) {
   const normalizedPhrase = normalizePhrase(phrase)
+  const desktopRuntime = isDesktopRuntime()
 
   if (!normalizedPhrase) {
     throw new Error('No phrase was selected for AI explanation.')
   }
 
-  const attempts = [
-    {
-      request: () => requestOpenAiCompat(normalizedPhrase, PRIMARY_MODEL),
-      source: 'Free AI model: Pollinations openai-fast',
-    },
-    {
-      request: () => requestOpenAiCompat(normalizedPhrase, SECONDARY_MODEL),
-      source: 'Free AI model: Pollinations openai',
-    },
-    {
-      request: () => requestLegacyFallback(normalizedPhrase),
-      source: 'Free AI model: Pollinations Text API',
-    },
-  ]
+  const attempts = desktopRuntime
+    ? [
+        {
+          request: () => requestDesktopGroqExplanation(normalizedPhrase),
+          source: 'Groq API (desktop)',
+        },
+      ]
+    : [
+        {
+          request: () => requestOpenAiCompat(normalizedPhrase, PRIMARY_MODEL),
+          source: 'Free AI model: Pollinations openai-fast',
+        },
+        {
+          request: () => requestOpenAiCompat(normalizedPhrase, SECONDARY_MODEL),
+          source: 'Free AI model: Pollinations openai',
+        },
+        {
+          request: () => requestLegacyFallback(normalizedPhrase),
+          source: 'Free AI model: Pollinations Text API',
+        },
+      ]
+
+  let lastError = null
 
   for (const attempt of attempts) {
     for (let retryIndex = 0; retryIndex < MAX_RETRIES_PER_ATTEMPT; retryIndex += 1) {
@@ -454,14 +503,26 @@ export async function explainPhraseInSimpleTerms(phrase) {
             source: attempt.source,
           }
         }
-      } catch {
-        // Try retry/fallback.
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : 'AI request failed.'
+
+        if (desktopRuntime) {
+          break
+        }
       }
 
       if (retryIndex + 1 < MAX_RETRIES_PER_ATTEMPT) {
         await sleep(300)
       }
     }
+
+    if (desktopRuntime && lastError) {
+      break
+    }
+  }
+
+  if (desktopRuntime) {
+    throw new Error(lastError || 'Groq request failed in desktop mode.')
   }
 
   return {
