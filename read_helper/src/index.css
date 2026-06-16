@@ -1,19 +1,36 @@
 :root {
-  --text: #25303d;
-  --text-h: #111827;
-  --bg: #f4f1ea;
-  --border: #d9d2c7;
-  --code-bg: #ebe4d8;
-  --accent: #0f766e;
-  --accent-bg: rgba(15, 118, 110, 0.14);
-  --accent-border: rgba(15, 118, 110, 0.38);
+  --bg: #ffffff;
+  --bg-secondary: #f5f5f7;
+  --bg-tertiary: #ebebee;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #aeaeb2;
+  --border: #d2d2d7;
+  --border-light: #e8e8ed;
+  --surface: #ffffff;
+  --surface-secondary: #f5f5f7;
+  --surface-hover: #f0f0f2;
+  --surface-active: #e8e8ed;
+  --surface-inverse: #1d1d1f;
+  --text-inverse: #ffffff;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.12);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 999px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --error: #c82424;
+  --error-bg: #fef2f2;
+  --success: #0d7c47;
+  --focus: rgba(0, 0, 0, 0.25);
 
-  --sans: 'Segoe UI', 'Trebuchet MS', sans-serif;
-  --heading: 'Segoe UI', 'Trebuchet MS', sans-serif;
-  --mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, monospace;
-
-  font: 16px/1.5 var(--sans);
-  letter-spacing: 0.01em;
+  font: 16px/1.5 var(--font);
+  letter-spacing: -0.01em;
   color-scheme: light;
   color: var(--text);
   background: var(--bg);
@@ -27,9 +44,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(15, 118, 110, 0.08), transparent 30%),
-    linear-gradient(180deg, #f7f4ee 0%, var(--bg) 100%);
 }
 
 #root {
@@ -38,29 +52,26 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
-  font-weight: 600;
-  color: var(--text-h);
+  font-family: var(--font);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
 }
 
 h2 {
   margin: 0;
 }
+
 p {
   margin: 0;
 }
 
-code,
-button,
-input {
-  font-family: var(--mono);
-}
-
 code {
-  font-size: 15px;
-  padding: 4px 8px;
-  background: var(--code-bg);
-  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 2px 6px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
 }
 
 button,
@@ -74,6 +85,14 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.35);
-  outline-offset: 3px;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--text);
+}
+
+::selection {
+  background: rgba(0, 0, 0, 0.12);
 }
